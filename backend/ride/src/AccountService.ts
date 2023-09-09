@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import pgp from "pg-promise";
 import CpfValidator from "./CpfValidator";
+import Database from "./config/Database";
 
 export default class AccountService {
 	cpfValidator: CpfValidator;
@@ -14,7 +14,7 @@ export default class AccountService {
 	}
 
 	async signup (input: any) {
-		const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
+		const connection = Database.getConnection()
 		try {
 			const accountId = crypto.randomUUID();
 			const verificationCode = crypto.randomUUID();
@@ -36,8 +36,8 @@ export default class AccountService {
 	}
 
 	async getAccount (accountId: string) {
-		const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
-		const [account] = await connection.query("select * from cccat13.account where account_id = $1", [accountId]);
+		const connection = Database.getConnection()
+		const [account] = await connection.query("select * from cccat13.account where account_id = $1", [accountId])
 		await connection.$pool.end();
 		return account;
 	}
