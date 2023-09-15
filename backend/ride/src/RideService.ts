@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import AccountService from "./AccountService";
 import Database from "./config/Database";
+import RideDAODatabase from "./RideDAODatabase";
+import RideDAO from "./RideDAO";
 
 export enum RideStatus {
   Requested = "requested",
@@ -12,7 +14,7 @@ export enum RideStatus {
 
 export default class RideService {
   accountService: AccountService;
-  constructor() {
+  constructor(readonly rideDAO: RideDAO  = new RideDAODatabase()) {
     this.accountService = new AccountService();
   }
 
@@ -36,15 +38,10 @@ export default class RideService {
     );
     if (!isAllCompletedRide)
       throw new Error("Driver already has an unfinished ride");
-    const connection = Database.getConnection();
-    try {
-      await connection.query(
-        "update cccat13.ride set driver_id=$1, status=$2 where ride_id=$3",
-        [driverId, RideStatus.Accepted ,rideId]
-      );
-    } finally {
-      await connection.$pool.end();
-    }
+    dataRide.rideId = rideId
+    dataRide.status = RideStatus.Accepted
+    dataRide.driverId = driverId
+    await this.rideDAO.update(dataRide);
   }
 
   async requestRide(input: any) {
@@ -60,49 +57,51 @@ export default class RideService {
       throw new Error("There active ride to this passeger");
     const rideId = crypto.randomUUID();
     const date = new Date();
-    const connection = Database.getConnection();
-    try {
-      await connection.query(
-        "insert into cccat13.ride (ride_id, passenger_id, status, from_lat, from_long, to_lat, to_long, date) values ($1, $2, $3, $4, $5, $6, $7, $8)",
-        [
-          rideId,
-          passengerId,
-          RideStatus.Requested,
-          from.lat,
-          from.long,
-          to.lat,
-          to.long,
-          date,
-        ]
-      );
-      return { rideId };
-    } finally {
-      await connection.$pool.end();
+    const ride = {
+      rideId,
+      passengerId,
+      status: RideStatus.Requested,
+      from,
+      to,
+      date
     }
+    await this.rideDAO.save(ride)
+    return { rideId };
   }
 
   async isAllCompletedRide(type: string, accountId: string) {
-    const connection = Database.getConnection();
-    const [{ count }] = await connection.query(
-      `select count(*) from cccat13.ride where ${type} = $1 and status IN($2, $3)`,
-      [
-        accountId,
-        RideStatus.Accepted,
-        type == "driver_id" ? RideStatus.InProgress : RideStatus.Requested,
-      ]
-    );
-    await connection.$pool.end();
+    const count = await this.rideDAO.getActiveRidesByPersonaId(type, accountId)
     const allCompletedRide = count == 0 ? true : false;
     return allCompletedRide;
   }
 
   async getRide(rideId: string) {
-    const connection = Database.getConnection();
-    const [ride] = await connection.query(
-      "select * from cccat13.ride where ride_id = $1",
-      [rideId]
-    );
-    await connection.$pool.end();
+    const ride = await this.rideDAO.getById(rideId)
     return ride;
   }
+
+  // Ator: Motorista
+  // Input: ride_id
+  // Output: void
+  // Regras:
+  // Deve verificar se a corrida está em status "accepted", se não estiver lançar um erro
+  // Deve modificar o status da corrida para "in_progress"
+  async startRide(input: any) {}
+
+  // Ator: Sistema (atualiza a cada 10 segundos de forma automática)
+  // Input: ride_id, lat, long
+  // Output: void
+  // Deve verificar se a corrida está em status "in_progress", se não estiver lançar um erro
+  // Deve gerar o position_id
+  // Deve salvar na tabela position: position_id, ride_id, lat, long e date
+  async updatePosition(input: any) {}
+
+  //   Ator: Motorista
+  // Input: ride_id
+  // Output: void
+  // Deve verificar se a corrida está em status "in_progress", se não estiver lançar um erro
+  // Deve obter todas as positions e calcular a distância entre cada uma delas, para isso utilize um algoritmo que receba duas coordenadas (lat, long) e retorne a distância entre elas em km.
+  // Com a distância total calculada, calcule o valor da corrida (fare) multiplicando a distância por 2,1
+  // Atualizar a corrida com o status "completed", a distância e o valor da corrida (fare)
+  async finishRide(input: any) {}
 }
