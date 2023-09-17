@@ -178,4 +178,83 @@ describe("RideSerive", () => {
         expect(ride.driver_id).toBe(driverAccountId)
       })
   });
+  describe("startRide", () =>{
+    test("Should verify if ride is with status 'accepted'", async()=>{
+      const input = {
+        accountId: passengerAccountId,
+        from: { lat: 0, long: 0 },
+        to: { lat: 0, long: 0 },
+      };
+      const rideService = new RideService();
+      const { rideId } = await rideService.requestRide(input)
+      await expect(()=>rideService.startRide(rideId)).rejects.toThrow(new Error("Only rides with 'accepted' status can be started"))
+    })
+    test("Should change status ride to 'in_progress'", async()=>{
+      const input = {
+        accountId: passengerAccountId,
+        from: { lat: 0, long: 0 },
+        to: { lat: 0, long: 0 },
+      };
+      const rideService = new RideService();
+      const { rideId } = await rideService.requestRide(input)
+      await rideService.acceptRide({accountId: driverAccountId, rideId})
+      await rideService.startRide(rideId)
+      const ride = await rideService.getRide(rideId)
+      expect(ride.status).toBe(RideStatus.InProgress)
+    })
+  })
+
+  describe("updatePosition", () =>{
+    test("Should verify if ride is with status 'in_progress'", async()=>{
+      const inputRide = {
+        accountId: passengerAccountId,
+        from: { lat: 0, long: 0 },
+        to: { lat: 0, long: 0 },
+      };
+      const rideService = new RideService();
+      const { rideId } = await rideService.requestRide(inputRide)
+
+      const inputPosition = {
+        rideId,
+        lat: 0,
+        long: 0
+      }
+      await expect(()=>rideService.updatePosition(inputPosition)).rejects.toThrow(new Error("Only rides with 'in_progress' status is accepted"))
+    })
+
+    test("Should create position_id", async()=>{
+      const inputRide = {
+        accountId: passengerAccountId,
+        from: { lat: 0, long: 0 },
+        to: { lat: 0, long: 0 },
+      };
+      const rideService = new RideService();
+      const { rideId } = await rideService.requestRide(inputRide)
+      await rideService.acceptRide({accountId: driverAccountId, rideId})
+      await rideService.startRide(rideId)
+
+      const inputPosition = {
+        rideId,
+        lat: 0,
+        long: 0
+      }
+
+      const positionId = await rideService.updatePosition(inputPosition)
+      expect(positionId).toBeDefined()
+    })
+  })
+
+  describe("finishRide", () =>{
+    test.only("Should verify id ride is with status 'in_progress'", async()=>{
+      const inputRide = {
+        accountId: passengerAccountId,
+        from: { lat: 0, long: 0 },
+        to: { lat: 0, long: 0 },
+      };
+      const rideService = new RideService();
+      const { rideId } = await rideService.requestRide(inputRide)
+
+      await expect(()=>rideService.finishRide(rideId)).rejects.toThrow(new Error("Only rides with 'in_progress' status is accepted"))
+    })
+  })
 });

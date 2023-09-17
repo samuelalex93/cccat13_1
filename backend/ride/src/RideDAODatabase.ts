@@ -30,6 +30,34 @@ export default class RideDAODatabase implements RideDAO {
     await connection.$pool.end()
   };
 
+  async finishRide(ride: any){
+    const connection = Database.getConnection();
+    await connection.query(
+      "update cccat13.ride set driver_id=$1, status=$2 where ride_id=$3, distance=$4, fare=$5",
+      [ride.driverId, ride.status , ride.rideId, ride.distance, ride.fare]
+    );
+    await connection.$pool.end()
+  };
+
+  async updatePosition(position: any){
+    const connection = Database.getConnection();
+    await connection.query(
+      "insert into cccat13.position (position_id, ride_id, lat, long, date) values ($1, $2, $3, $4, $5)",
+      [position.positionId, position.rideId , position.lat, position.long, position.date]
+    );
+    await connection.$pool.end()
+  };
+
+  async getPositionByRideId(rideId: any){
+    const connection = Database.getConnection();
+    const [position] = await connection.query(
+      "select * from cccat13.position where ride_id = $1",
+      [rideId]
+    );
+    await connection.$pool.end()
+    return position
+  };
+
   async getById(rideId: string){
     const connection = Database.getConnection();
     const [ride] = await connection.query(

@@ -30,7 +30,7 @@ export default class RideService {
     const dataRide = await this.getRide(rideId);
     if (dataRide.status != RideStatus.Requested)
       throw new Error(
-        "Only rides with 'requested' status can is allow accepted"
+        "Only rides with 'requested' status can be accepted"
       );
     const isAllCompletedRide = await this.isAllCompletedRide(
       "driver_id",
@@ -80,21 +80,30 @@ export default class RideService {
     return ride;
   }
 
-  // Ator: Motorista
-  // Input: ride_id
-  // Output: void
-  // Regras:
-  // Deve verificar se a corrida está em status "accepted", se não estiver lançar um erro
-  // Deve modificar o status da corrida para "in_progress"
-  async startRide(input: any) {}
+  async startRide(rideId: any) {
+    const ride = await this.rideDAO.getById(rideId)
+    if(ride.status != RideStatus.Accepted) throw new Error("Only rides with 'accepted' status can be started")
+    ride.status = RideStatus.InProgress;
+    ride.rideId = ride.ride_id
+    ride.driverId = ride.driver_id
+    await this.rideDAO.update(ride)
+  }
 
-  // Ator: Sistema (atualiza a cada 10 segundos de forma automática)
-  // Input: ride_id, lat, long
-  // Output: void
-  // Deve verificar se a corrida está em status "in_progress", se não estiver lançar um erro
-  // Deve gerar o position_id
-  // Deve salvar na tabela position: position_id, ride_id, lat, long e date
-  async updatePosition(input: any) {}
+  async updatePosition(input: any) {
+    const {rideId, lat, long} = input
+    const ride = await this.getRide(rideId)
+    if(ride.status != RideStatus.InProgress) throw new Error("Only rides with 'in_progress' status is accepted")
+    const positionId = crypto.randomUUID();
+    const position = {
+      positionId,
+      rideId,
+      lat,
+      long,
+      date: new Date()
+    }
+    await this.rideDAO.updatePosition(position)
+    return { positionId }
+  }
 
   //   Ator: Motorista
   // Input: ride_id
@@ -103,5 +112,38 @@ export default class RideService {
   // Deve obter todas as positions e calcular a distância entre cada uma delas, para isso utilize um algoritmo que receba duas coordenadas (lat, long) e retorne a distância entre elas em km.
   // Com a distância total calculada, calcule o valor da corrida (fare) multiplicando a distância por 2,1
   // Atualizar a corrida com o status "completed", a distância e o valor da corrida (fare)
-  async finishRide(input: any) {}
+  async finishRide(rideId: any) {
+    const ride = await this.getRide(rideId)
+    if(ride.status != RideStatus.InProgress) throw new Error("Only rides with 'in_progress' status is accepted")
+    const inputPosition = await this.getPositionByRideId(rideId) as any
+    const distance = this.getDistance(inputPosition)
+    const fare = this.calculeteRideValue(distance)
+    ride.rideId = ride.ride_id
+    ride.status = RideStatus.Completed
+    ride.fare = fare
+    ride.distance = distance
+    await this.rideDAO.finishRide(ride)
+  }
+
+  async getPositionByRideId(rideId: any) {
+    const position = await this.rideDAO.getPositionByRideId(rideId) as any
+    const from = {
+      lat: position[0].lat,
+      long: position[0].long
+    }
+    const to = {
+      lat: position[position.length - 1].lat,
+      long: position[position.length - 1].long
+    }
+    return {from, to}
+  }
+
+  getDistance(input: any) {
+    const {from, lat} = input
+    return 10;
+  }
+
+  calculeteRideValue(distance: number){
+    return 2.1*distance
+  }
 }
