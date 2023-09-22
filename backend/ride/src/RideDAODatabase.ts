@@ -1,5 +1,5 @@
+import { RideStatus } from "./@types/RideStatus";
 import RideDAO from "./RideDAO";
-import { RideStatus } from "./RideService";
 import Database from "./config/Database";
 
 export default class RideDAODatabase implements RideDAO {
@@ -79,5 +79,33 @@ export default class RideDAODatabase implements RideDAO {
     );
     await connection.$pool.end();
     return count
+  }
+  
+  async getActiveRidesByDriverId(driverId: string){
+    const connection = Database.getConnection();
+    const [ride] = await connection.query(
+      `select * from cccat13.ride where driver_id = $1 and status IN($2, $3)`,
+      [
+        driverId,
+        RideStatus.Accepted,
+        RideStatus.InProgress,
+      ]
+    );
+    await connection.$pool.end();
+    return ride
+  }
+
+  async getActiveRidesByPassengerId(passengerId: string){
+    const connection = Database.getConnection();
+    const [ride] = await connection.query(
+      `select * from cccat13.ride where driver_id = $1 and status IN($2, $3)`,
+      [
+        passengerId,
+        RideStatus.Accepted,
+        RideStatus.Requested,
+      ]
+    );
+    await connection.$pool.end();
+    return ride
   }
 }

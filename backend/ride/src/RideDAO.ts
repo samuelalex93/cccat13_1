@@ -6,4 +6,6 @@ export default interface RideDAO {
   finishRide(rideId: string): Promise<any>;
   getById(rideId: string): Promise<any>;
   getActiveRidesByPersonaId(type: string, personaId: string): Promise<any>;
+  getActiveRidesByDriverId(driverId: string): Promise<any>;
+  getActiveRidesByPassengerId(passengerId: string): Promise<any>;
 }

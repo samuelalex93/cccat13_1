@@ -3,14 +3,8 @@ import AccountService from "./AccountService";
 import Database from "./config/Database";
 import RideDAODatabase from "./RideDAODatabase";
 import RideDAO from "./RideDAO";
+import { RideStatus } from "./@types/RideStatus";
 
-export enum RideStatus {
-  Requested = "requested",
-  Accepted = "accepted",
-  InProgress = "in_progress",
-  Completed = "completed",
-  Canceled = "canceled",
-}
 
 export default class RideService {
   accountService: AccountService;
