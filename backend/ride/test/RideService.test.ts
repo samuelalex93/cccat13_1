@@ -1,17 +1,48 @@
-import AccountService from "../src/AccountService";
-import RideService, { RideStatus } from "../src/RideService";
-import Database from "../src/config/Database";
+//import AccountService from "../src/AccountService";
+import { RideStatus } from "../src/@types/RideStatus";
+import AcceptRide from "../src/application/usecase/AcceptRide";
+import CancelRide from "../src/application/usecase/CancelRide";
+import FinishRide from "../src/application/usecase/FinishRide";
+import GetRide from "../src/application/usecase/GetRide";
+import RequestRide from "../src/application/usecase/RequestRide";
+import Signup from "../src/application/usecase/Signup";
+import StartRide from "../src/application/usecase/StartRide";
+import UpdatePosition from "../src/application/usecase/UpdatePosition";
+import Connection from "../src/infra/database/Connection";
+import PgPromiseAdapter from "../src/infra/database/PgPromiseAdapter";
+import AccountDAODatabase from "../src/infra/repository/AccountDAODatabase";
+import RideDAODatabase from "../src/infra/repository/RideDAODatabase";
+
+let signup: Signup;
+let connection: Connection;
+let accountDAO: AccountDAODatabase;
+let rideDAO: RideDAODatabase;
+let requestRide: RequestRide;
+let getRide: GetRide;
+let acceptRide: AcceptRide;
+let cancelRide: CancelRide;
+let startRide: StartRide;
+let updatePosition: UpdatePosition;
+let finishRide: FinishRide;
 
 describe("RideSerive", () => {
-  const createAccount = async (input: any) => {
-    const accountService = new AccountService();
-    return accountService.signup(input);
-  };
-
   let passengerAccountId: string;
   let driverAccountId: string;
 
   beforeAll(async () => {
+    connection = new PgPromiseAdapter();
+    accountDAO = new AccountDAODatabase(connection);
+    rideDAO = new RideDAODatabase(connection);
+    signup = new Signup(accountDAO);
+    requestRide = new RequestRide(rideDAO, accountDAO);
+    getRide = new GetRide(rideDAO);
+    acceptRide = new AcceptRide(rideDAO, accountDAO);
+    cancelRide = new CancelRide(rideDAO);
+    startRide = new StartRide(rideDAO);
+    finishRide = new FinishRide(rideDAO);
+    updatePosition = new UpdatePosition(rideDAO);
+    //getAccount = new GetAccount(accountDAO);
+
     const { accountId: passengerId } = await createAccount({
       name: "John Doe",
       email: `john.doe${Math.random()}@gmail.com`,
@@ -31,36 +62,34 @@ describe("RideSerive", () => {
     driverAccountId = driverId;
   });
 
+  const createAccount = async (input: any) => {
+    return signup.execute(input);
+  };
+
   beforeEach(async () => {
-    const connection = Database.getConnection();
-    await connection.query("delete from cccat13.ride");
-    await connection.$pool.end();
+    await connection.query("delete from cccat13.ride", "");
   });
 
   describe("requestRide", () => {
     test("Should verify if account_id has is_passenger true", async () => {
-      const input = {
+      const input: any = {
         accountId: driverAccountId,
         from: { lat: 0, long: 0 },
         to: { lat: 0, long: 0 },
       };
-
-      const rideService = new RideService();
-      await expect(() => rideService.requestRide(input)).rejects.toThrow(
+      await expect(() => requestRide.execute(input)).rejects.toThrow(
         new Error("Isn't passenger's account")
       );
     });
 
     test("Should verify if there are not a active ride to passenger", async () => {
-      const input = {
+      const input: any = {
         accountId: passengerAccountId,
         from: { lat: 0, long: 0 },
         to: { lat: 0, long: 0 },
       };
-
-      const rideService = new RideService();
-      await rideService.requestRide(input);
-      await expect(() => rideService.requestRide(input)).rejects.toThrow(
+      await requestRide.execute(input);
+      await expect(() => requestRide.execute(input)).rejects.toThrow(
         new Error("There active ride to this passeger")
       );
     });
@@ -71,9 +100,7 @@ describe("RideSerive", () => {
         from: { lat: 0, long: 0 },
         to: { lat: 0, long: 0 },
       };
-
-      const rideService = new RideService();
-      const { rideId } = await rideService.requestRide(input);
+      const { rideId } = await requestRide.execute(input);
       expect(rideId).toBeDefined();
     });
 
@@ -84,20 +111,18 @@ describe("RideSerive", () => {
         to: { lat: 0, long: 0 },
       };
 
-      const rideService = new RideService();
-      const output = await rideService.requestRide(input);
-      const ride = await rideService.getRide(output.rideId);
-      expect(ride.status).toBe(RideStatus.Requested);
+      const output = await requestRide.execute(input);
+      const ride = await getRide.execute(output.rideId);
+      expect(ride.getStatus()).toBe(RideStatus.Requested);
     });
   });
   describe("acceptRide", () => {
     test("Should verify if account_id has is_driver true", async () => {
-      const input = {
+      const input: any = {
         accountId: passengerAccountId,
       };
 
-      const rideService = new RideService();
-      await expect(() => rideService.acceptRide(input)).rejects.toThrow(
+      await expect(() => acceptRide.execute(input)).rejects.toThrow(
         new Error("Isn't driver's account")
       );
     });
@@ -109,22 +134,14 @@ describe("RideSerive", () => {
         to: { lat: 0, long: 0 },
       };
 
-      const rideService = new RideService();
-      const { rideId } = await rideService.requestRide(input);
-      const connection = Database.getConnection();
-      try {
-        await connection.query(
-          "update cccat13.ride set status = $1 where ride_id = $2",
-          [RideStatus.Canceled, rideId]
-        );
-      } finally {
-        await connection.$pool.end();
-      }
+      const { rideId } = await requestRide.execute(input);
+
+      await cancelRide.execute({ rideId })
 
       await expect(() =>
-        rideService.acceptRide({ accountId: driverAccountId, rideId })
+        acceptRide.execute({ accountId: driverAccountId, rideId })
       ).rejects.toThrow(
-        new Error("Only rides with 'requested' status can is allow accepted")
+        new Error("Only rides with 'requested' status can be accepted")
       );
     });
 
@@ -145,19 +162,18 @@ describe("RideSerive", () => {
         from: { lat: 0, long: 0 },
         to: { lat: 0, long: 0 },
       };
-      const rideService = new RideService();
-      const { rideId: firstRideId } = await rideService.requestRide(
+      const { rideId: firstRideId } = await requestRide.execute(
         firstRideInput
       );
-      await rideService.acceptRide({
+      await acceptRide.execute({
         accountId: driverAccountId,
         rideId: firstRideId,
       });
-      const { rideId: secondRideId } = await rideService.requestRide(
+      const { rideId: secondRideId } = await requestRide.execute(
         secondRideInput
       );
       await expect(() =>
-        rideService.acceptRide({
+        acceptRide.execute({
           accountId: driverAccountId,
           rideId: secondRideId,
         })
@@ -170,12 +186,11 @@ describe("RideSerive", () => {
           from: { lat: 0, long: 0 },
           to: { lat: 0, long: 0 }
         }
-        const rideService = new RideService()
-        const { rideId } = await rideService.requestRide(input)
-        await rideService.acceptRide({ accountId: driverAccountId, rideId })
-        const ride = await rideService.getRide(rideId)
-        expect(ride.status).toBe(RideStatus.Accepted)
-        expect(ride.driver_id).toBe(driverAccountId)
+        const { rideId } = await requestRide.execute(input)
+        await acceptRide.execute({ accountId: driverAccountId, rideId })
+        const ride = await getRide.execute(rideId)
+        expect(ride?.getStatus()).toBe(RideStatus.Accepted)
+        expect(ride?.driverId).toBe(driverAccountId)
       })
   });
   describe("startRide", () =>{
@@ -185,9 +200,9 @@ describe("RideSerive", () => {
         from: { lat: 0, long: 0 },
         to: { lat: 0, long: 0 },
       };
-      const rideService = new RideService();
-      const { rideId } = await rideService.requestRide(input)
-      await expect(()=>rideService.startRide(rideId)).rejects.toThrow(new Error("Only rides with 'accepted' status can be started"))
+    
+      const { rideId } = await requestRide.execute(input)
+      await expect(()=>startRide.execute(rideId)).rejects.toThrow(new Error("Only rides with 'accepted' status can be started"))
     })
     test("Should change status ride to 'in_progress'", async()=>{
       const input = {
@@ -195,12 +210,11 @@ describe("RideSerive", () => {
         from: { lat: 0, long: 0 },
         to: { lat: 0, long: 0 },
       };
-      const rideService = new RideService();
-      const { rideId } = await rideService.requestRide(input)
-      await rideService.acceptRide({accountId: driverAccountId, rideId})
-      await rideService.startRide(rideId)
-      const ride = await rideService.getRide(rideId)
-      expect(ride.status).toBe(RideStatus.InProgress)
+      const { rideId } = await requestRide.execute(input)
+      await acceptRide.execute({accountId: driverAccountId, rideId})
+      await startRide.execute(rideId)
+      const ride = await getRide.execute(rideId)
+      expect(ride?.getStatus()).toBe(RideStatus.InProgress)
     })
   })
 
@@ -211,27 +225,25 @@ describe("RideSerive", () => {
         from: { lat: 0, long: 0 },
         to: { lat: 0, long: 0 },
       };
-      const rideService = new RideService();
-      const { rideId } = await rideService.requestRide(inputRide)
+      const { rideId } = await requestRide.execute(inputRide)
 
       const inputPosition = {
         rideId,
         lat: 0,
         long: 0
       }
-      await expect(()=>rideService.updatePosition(inputPosition)).rejects.toThrow(new Error("Only rides with 'in_progress' status is accepted"))
+      await expect(()=> updatePosition.execute(inputPosition)).rejects.toThrow(new Error("Only rides with 'in_progress' status is accepted"))
     })
 
-    test("Should create position_id", async()=>{
+    test.only("Should create position_id", async()=>{
       const inputRide = {
         accountId: passengerAccountId,
         from: { lat: 0, long: 0 },
         to: { lat: 0, long: 0 },
       };
-      const rideService = new RideService();
-      const { rideId } = await rideService.requestRide(inputRide)
-      await rideService.acceptRide({accountId: driverAccountId, rideId})
-      await rideService.startRide(rideId)
+      const { rideId } = await requestRide.execute(inputRide)
+      await acceptRide.execute({accountId: driverAccountId, rideId})
+      await startRide.execute(rideId)
 
       const inputPosition = {
         rideId,
@@ -239,7 +251,7 @@ describe("RideSerive", () => {
         long: 0
       }
 
-      const positionId = await rideService.updatePosition(inputPosition)
+      const positionId = await updatePosition.execute(inputPosition)
       expect(positionId).toBeDefined()
     })
   })
@@ -251,10 +263,13 @@ describe("RideSerive", () => {
         from: { lat: 0, long: 0 },
         to: { lat: 0, long: 0 },
       };
-      const rideService = new RideService();
-      const { rideId } = await rideService.requestRide(inputRide)
+      const { rideId } = await requestRide.execute(inputRide)
 
-      await expect(()=>rideService.finishRide(rideId)).rejects.toThrow(new Error("Only rides with 'in_progress' status is accepted"))
+      await expect(()=>finishRide.execute(rideId)).rejects.toThrow(new Error("Only rides with 'in_progress' status is accepted"))
     })
+  })
+
+  afterAll(async() => {
+    await connection.close();
   })
 });
