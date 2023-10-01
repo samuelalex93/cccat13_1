@@ -33,7 +33,6 @@ export default class RideDAODatabase implements RideDAO {
   };
 
   async finishRide(ride: Ride){
-    console.log("finishride", ride)
     await this.connection.query(
       "update cccat13.ride set driver_id=$2, status=$3, distance=$4, fare=$5 where ride_id=$1",
       [ride.rideId, ride.driverId, ride.getStatus(), ride.distance, ride.fare]

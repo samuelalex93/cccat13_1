@@ -15,6 +15,7 @@ export default class Signup {
   async execute(input: Input){
     const existingAccount = await this.accountDAO.getByEmail(input.email);
     if (existingAccount) throw new Error("Account already exists");
+    const password = Account.encryptPassword(input.password)
     const account = Account.create(
       input.name,
       input.email,
@@ -22,6 +23,7 @@ export default class Signup {
       input.isPassenger,
       input.isDriver,
       input.carPlate,
+      password
     )
     await this.accountDAO.save(account);
     await this.mailerGateway.send(
@@ -41,5 +43,6 @@ type Input = {
 	cpf: string,
 	isPassenger: boolean,
 	isDriver: boolean,
-	carPlate: string
+	carPlate: string,
+  password: string
 }

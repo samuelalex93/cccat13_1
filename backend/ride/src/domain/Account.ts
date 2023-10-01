@@ -12,9 +12,10 @@ export default class Account {
     readonly carPlate: string,
     readonly date: Date,
     readonly verificationCode: string,
+    readonly password: string
   ) {}
 
-  static create(name:string, email:string, cpf:string, isPassenger:boolean, isDriver: boolean, carPlate:string) {
+  static create(name:string, email:string, cpf:string, isPassenger:boolean, isDriver: boolean, carPlate:string, password: string) {
     if (!name.match(/[a-zA-Z] [a-zA-Z]+/)) throw new Error("Invalid name");
 		if (!email.match(/^(.+)@(.+)$/)) throw new Error("Invalid email");
 		const cpfValidator = new CpfValidator();
@@ -23,10 +24,18 @@ export default class Account {
 		const accountId = crypto.randomUUID();
 		const verificationCode = crypto.randomUUID();
 		const date = new Date();
-		return new Account(accountId, name, email, cpf, isPassenger, isDriver, carPlate, date, verificationCode);
+		return new Account(accountId, name, email, cpf, isPassenger, isDriver, carPlate, date, verificationCode, password);
   }
   
-  static restore (accountId: string, name: string, email: string, cpf: string, isPassenger: boolean, isDriver: boolean, carPlate: string, date: Date, verificationCode: string) {
-		return new Account(accountId, name, email, cpf, isPassenger, isDriver, carPlate, date, verificationCode);
+  static restore (accountId: string, name: string, email: string, cpf: string, isPassenger: boolean, isDriver: boolean, carPlate: string, date: Date, verificationCode: string, password:string) {
+		return new Account(accountId, name, email, cpf, isPassenger, isDriver, carPlate, date, verificationCode, password);
 	}
+
+  static encryptPassword(password: string) {
+    return btoa(password)
+  }
+
+  static dencryptPassword(password: string) {
+    return atob(password)
+  }
 }

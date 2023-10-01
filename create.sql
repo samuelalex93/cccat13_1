@@ -8,9 +8,32 @@ create table cccat13.account (
 	email text,
 	cpf text,
 	car_plate text,
+	password text,
 	is_passenger boolean,
 	is_driver boolean,
 	date timestamp,
 	is_verified boolean,
 	verification_code uuid
+);
+
+create table cccat13.ride (
+	ride_id uuid,
+	passenger_id uuid,
+	driver_id uuid,
+	status text,
+	fare numeric,
+	distance numeric,
+	from_lat numeric,
+	from_long numeric,
+	to_lat numeric,
+	to_long numeric,
+	date timestamp
+);
+
+create table cccat13.position (
+	position_id uuid,
+	ride_id uuid,
+	lat numeric,
+	long numeric,
+	date timestamp
 );

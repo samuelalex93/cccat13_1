@@ -1,4 +1,3 @@
-import { RideStatus } from "../../@types/RideStatus";
 import AccountDAO from "../repository/AccountDAO";
 import RideDAO from "../repository/RideDAO";
 

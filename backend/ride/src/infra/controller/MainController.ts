@@ -1,13 +1,18 @@
 import GetAccount from "../../application/usecase/GetAccount";
 import GetRide from "../../application/usecase/GetRide";
 import RequestRide from "../../application/usecase/RequestRide";
+import Signin from "../../application/usecase/Signin";
 import Signup from "../../application/usecase/Signup";
 import HttpServer from "../http/HttpServer";
 
 export default class MainController {
-  constructor(readonly httpServer: HttpServer, signup: Signup, getAccount: GetAccount,  requestRide: RequestRide, getRide:GetRide){
+  constructor(readonly httpServer: HttpServer, signup: Signup, signin: Signin, getAccount: GetAccount,  requestRide: RequestRide, getRide:GetRide){
     httpServer.on("post", "/signup",async (params:any, body:any) => {
       const output = await signup.execute(body)
+      return output
+    })
+    httpServer.on("post", "/signin",async (params:any, body:any) => {
+      const output = await signin.execute(body)
       return output
     })
     httpServer.on("get", "/accounts/:accountId",async (params:any, body:any) => {
@@ -22,7 +27,6 @@ export default class MainController {
 		httpServer.on("get", "/rides/:rideId", async function (params: any, body: any) {
 			console.log(params.rideId);
 			const output = await getRide.execute(params.rideId);
-			console.log(output);
 			return output;
 		});
   }
