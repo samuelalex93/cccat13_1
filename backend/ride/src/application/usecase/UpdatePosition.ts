@@ -18,7 +18,7 @@ export default class UpdatePosition {
       long,
       date: new Date()
     }
-    await this.rideDAO.updatePosition(position)
+    await this.rideDAO.savePosition(position)
     return { positionId }
   }
 }

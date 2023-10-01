@@ -1,3 +1,4 @@
+import { coords } from './mockCoords';
 //import AccountService from "../src/AccountService";
 import { RideStatus } from "../src/@types/RideStatus";
 import AcceptRide from "../src/application/usecase/AcceptRide";
@@ -235,7 +236,7 @@ describe("RideSerive", () => {
       await expect(()=> updatePosition.execute(inputPosition)).rejects.toThrow(new Error("Only rides with 'in_progress' status is accepted"))
     })
 
-    test.only("Should create position_id", async()=>{
+    test("Should create position_id", async()=>{
       const inputRide = {
         accountId: passengerAccountId,
         from: { lat: 0, long: 0 },
@@ -257,7 +258,7 @@ describe("RideSerive", () => {
   })
 
   describe("finishRide", () =>{
-    test.only("Should verify id ride is with status 'in_progress'", async()=>{
+    test("Should verify id ride is with status 'in_progress'", async()=>{
       const inputRide = {
         accountId: passengerAccountId,
         from: { lat: 0, long: 0 },
@@ -266,6 +267,33 @@ describe("RideSerive", () => {
       const { rideId } = await requestRide.execute(inputRide)
 
       await expect(()=>finishRide.execute(rideId)).rejects.toThrow(new Error("Only rides with 'in_progress' status is accepted"))
+    })
+
+    test("Should verify id ride is with status 'completed'", async()=>{
+      const fromPosition = coords[0]
+      const toPosition = coords[coords.length - 1]
+      const inputRide = {
+        accountId: passengerAccountId,
+        from: { lat: fromPosition.lat, long: fromPosition.long },
+        to: { lat: toPosition.lat, long: toPosition.long },
+      };
+      const { rideId } = await requestRide.execute(inputRide)
+      await acceptRide.execute({accountId: driverAccountId, rideId})
+      await startRide.execute(rideId)
+      for(const coord of coords){
+        const inputPosition = {
+          rideId,
+          lat: coord.lat,
+          long: coord.long
+        }
+        await updatePosition.execute(inputPosition)
+      }
+      await finishRide.execute(rideId)
+      
+      const ride = await getRide.execute(rideId)
+      expect(ride.getStatus()).toEqual(RideStatus.Completed)
+      expect(ride.distance).toBeDefined()
+      expect(ride.fare).toBeDefined()
     })
   })
 

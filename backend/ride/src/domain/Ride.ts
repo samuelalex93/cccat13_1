@@ -1,10 +1,12 @@
 import crypto from "crypto";
 import { RideStatus } from "../@types/RideStatus";
+import DistanceCalculator from "./DistanceCalculator";
+import Position from "./Position";
 
 export default class Ride {
   driverId?: string;
-	fare?: number ;
-	distance?: number;
+	fare: number = 0;
+	distance: number = 0;
 
 
   private constructor(
@@ -15,7 +17,7 @@ export default class Ride {
     readonly fromLong: number,
     readonly toLat: number,
     readonly toLong: number,
-    readonly date: Date
+    readonly date: Date,
   ) {}
 
   static create(
@@ -50,8 +52,8 @@ export default class Ride {
     toLat: number,
     toLong: number,
     date: Date,
-		fare: number,
-		distance: number
+		fare?: number,
+		distance?: number
   ) {
     const ride = new Ride(
       rideId,
@@ -61,9 +63,11 @@ export default class Ride {
       fromLong,
       toLat,
       toLong,
-      date
+      date,
     );
     ride.driverId = driverId;
+    ride.fare = fare || 0;
+    ride.distance = distance || 0;
     return ride;
   }
 
@@ -80,10 +84,8 @@ export default class Ride {
     this.status = RideStatus.InProgress;
   }
 
-  finish(fare: number, distance: number) {
+  finish() {
     this.status = RideStatus.Completed;
-		this.fare = fare
-		this.distance = distance
   }
 
   cancel() {
@@ -94,5 +96,19 @@ export default class Ride {
 
   getStatus() {
     return this.status;
+  }
+
+  calculateDistance(positions: Position[]) {
+    let distance = 0
+    for(let i = 1; i < positions.length; i++) {
+      const from = {lat: positions[i-1].lat, long: positions[i-1].long}
+      const to = {lat: positions[i].lat, long: positions[i].long}
+      distance += DistanceCalculator.calculate(from, to) 
+    }
+    this.distance = distance
+  }
+
+  calculatePrice(){
+    this.fare = 2.1 * this.distance
   }
 }

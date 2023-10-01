@@ -1,5 +1,6 @@
 import { RideStatus } from "../../@types/RideStatus";
 import RideDAO from "../../application/repository/RideDAO";
+import Position from "../../domain/Position";
 import Ride from "../../domain/Ride";
 import Connection from "../database/Connection";
 
@@ -31,34 +32,41 @@ export default class RideDAODatabase implements RideDAO {
     );
   };
 
-  async finishRide(ride: any){
+  async finishRide(ride: Ride){
+    console.log("finishride", ride)
     await this.connection.query(
-      "update cccat13.ride set driver_id=$1, status=$2 where ride_id=$3, distance=$4, fare=$5",
-      [ride.driverId, ride.getStatus() , ride.rideId, ride.distance, ride.fare]
+      "update cccat13.ride set driver_id=$2, status=$3, distance=$4, fare=$5 where ride_id=$1",
+      [ride.rideId, ride.driverId, ride.getStatus(), ride.distance, ride.fare]
     );
   };
 
-  async updatePosition(position: any){
+  async savePosition(position: any){
     await this.connection.query(
       "insert into cccat13.position (position_id, ride_id, lat, long, date) values ($1, $2, $3, $4, $5)",
       [position.positionId, position.rideId , position.lat, position.long, position.date]
     );
   };
 
-  async getPositionByRideId(rideId: any){
-    const [position] = await this.connection.query(
+  async getPositionByRideId(rideId: string){
+    const positions = await this.connection.query(
       "select * from cccat13.position where ride_id = $1",
       [rideId]
     );
-    return position
+
+    return positions.map((position: any) => new Position(
+      position.position_id, 
+      position.ride_id,
+      parseFloat(position.lat),
+      parseFloat(position.long),
+      position.date))
   };
 
-  async getById(rideId: string): Promise<any>{
+  async getById(rideId: string){
     const [ride] = await this.connection.query(
       "select * from cccat13.ride where ride_id = $1",
       [rideId]
     );
-		return Ride.restore(ride.ride_id, ride.passenger_id, ride.driver_id, ride.status, parseFloat(ride.from_lat), parseFloat(ride.from_long), parseFloat(ride.to_lat), parseFloat(ride.to_long), ride.date, ride.fare, ride.distance);
+		return Ride.restore(ride.ride_id, ride.passenger_id, ride.driver_id, ride.status, parseFloat(ride.from_lat), parseFloat(ride.from_long), parseFloat(ride.to_lat), parseFloat(ride.to_long), ride.date, parseFloat(ride.fare), parseFloat(ride.distance));
   }
   
   async getActiveRidesByPersonaId(type: string, personaId: string){
