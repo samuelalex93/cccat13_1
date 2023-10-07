@@ -1,12 +1,12 @@
-import AccountDAO from "../repository/AccountDAO";
-import RideDAO from "../repository/RideDAO";
+import AccountRepository from "../repository/AccountRepository";
+import RideRepository from "../repository/RideRepository";
 
 export default class GetRide {
-  constructor(readonly rideDAO: RideDAO, readonly accountDAO: AccountDAO) {}
+  constructor(readonly rideRepository: RideRepository, readonly accountRepository: AccountRepository) {}
 
   async execute(rideId: string) {
-    const ride = await this.rideDAO.getById(rideId);
-    const account = await this.accountDAO.getById(ride.passengerId);
+    const ride = await this.rideRepository.getById(rideId);
+    const account = await this.accountRepository.getById(ride.passengerId);
     if (!ride || !account) throw new Error();
     return {
       rideId: ride.rideId,

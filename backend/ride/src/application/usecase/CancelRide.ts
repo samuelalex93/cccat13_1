@@ -1,15 +1,15 @@
-import RideDAO from "../repository/RideDAO";
+import RideRepository from "../repository/RideRepository";
 
 export default class CancelRide {
   constructor (
-    readonly rideDAO: RideDAO
+    readonly rideRepository: RideRepository
   ) {}
 
   async execute (input: Input) {
     const { rideId } = input;
-    const ride = await this.rideDAO.getById(rideId);
+    const ride = await this.rideRepository.getById(rideId);
     ride.cancel()
-    await this.rideDAO.update(ride);
+    await this.rideRepository.update(ride);
   }
 }
 

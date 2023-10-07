@@ -1,8 +1,8 @@
-import AccountDAO from "../../application/repository/AccountDAO";
+import AccountDAO from "../../application/repository/AccountRepository";
 import Account from "../../domain/Account";
 import Connection from "../database/Connection";
 
-export default class AccountDAODatabase implements AccountDAO {
+export default class AccountRepositoryDatabase implements AccountDAO {
 
 	constructor (readonly connection: Connection) {
 	}

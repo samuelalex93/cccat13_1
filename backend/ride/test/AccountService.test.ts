@@ -1,23 +1,23 @@
-import AccountDAO from "../src/application/repository/AccountDAO";
+import AccountRepository from "../src/application/repository/AccountRepository";
 import GetAccount from "../src/application/usecase/GetAccount";
 import Signin from "../src/application/usecase/Signin";
 import Signup from "../src/application/usecase/Signup";
 import Connection from "../src/infra/database/Connection";
 import PgPromiseAdapter from "../src/infra/database/PgPromiseAdapter";
-import AccountDAODatabase from "../src/infra/repository/AccountDAODatabase";
+import AccountRepositoryDatabase from "../src/infra/repository/AccountRepositoryDatabase";
 
 let signup: Signup;
 let signin: Signin;
 let getAccount: GetAccount;
 let connection: Connection;
-let accountDAO: AccountDAO;
+let accountRepository: AccountRepository;
 
 beforeEach(function () {
   connection = new PgPromiseAdapter();
-  accountDAO = new AccountDAODatabase(connection);
-  signup = new Signup(accountDAO);
-  signin = new Signin(accountDAO);
-  getAccount = new GetAccount(accountDAO);
+  accountRepository = new AccountRepositoryDatabase(connection);
+  signup = new Signup(accountRepository);
+  signin = new Signin(accountRepository);
+  getAccount = new GetAccount(accountRepository);
 });
 
 afterEach(async () => {

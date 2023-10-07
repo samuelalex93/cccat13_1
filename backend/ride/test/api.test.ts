@@ -28,5 +28,5 @@ test("Should doing login", async () => {
   await axios.post("http://localhost:3000/signup", input)
   const responseLogin = await axios.post(`http://localhost:3000/signin`,{cpf:input.cpf, password: input.password})
   const outputLogin = responseLogin.data;
-  expect(outputLogin?.accountId).toBeDefined();
+  expect(outputLogin?.token).toBeDefined();
 })

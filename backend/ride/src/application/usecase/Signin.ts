@@ -1,13 +1,13 @@
 import Account from "../../domain/Account";
 import TokenGenerator from "../../domain/TokenGererator";
-import AccountDAO from "../repository/AccountDAO";
+import AccountRepository from "../repository/AccountRepository";
 
 export default class Signin {
 
-  constructor(readonly accountDAO: AccountDAO){ }
+  constructor(readonly accountRepository: AccountRepository){ }
 
   async execute(input: Input): Promise<Output>{
-    const account = await this.accountDAO.getByCPF(input.cpf);
+    const account = await this.accountRepository.getByCPF(input.cpf);
     if(!account) throw new Error("There no any account with this CPF")
     const password = Account.dencryptPassword(account?.password)
     if(input.password != password) throw new Error("Invalid password")

@@ -1,7 +1,7 @@
 import Position from "../../domain/Position";
 import Ride from "../../domain/Ride";
 
-export default interface RideDAO {
+export default interface RideRepository {
   save(ride: any): Promise<void>;
   update(ride: Ride): Promise<void>;
   savePosition(position: any): Promise<void>;

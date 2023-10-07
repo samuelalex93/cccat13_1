@@ -1,11 +1,11 @@
 import { RideStatus } from "../../@types/RideStatus";
-import RideDAO from "../../application/repository/RideDAO";
+import RideDAO from "../../application/repository/RideRepository";
 import Coord from "../../domain/Coord";
 import Position from "../../domain/Position";
 import Ride from "../../domain/Ride";
 import Connection from "../database/Connection";
 
-export default class RideDAODatabase implements RideDAO {
+export default class AccountRepositoryDatabase implements RideDAO {
   constructor(readonly connection: Connection) {}
 
   async save(ride: Ride) {

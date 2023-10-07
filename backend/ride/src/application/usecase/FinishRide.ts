@@ -1,16 +1,16 @@
 import { RideStatus } from "../../@types/RideStatus";
-import RideDAO from "../repository/RideDAO"
+import RideRepository from "../repository/RideRepository";
 
 export default class finishRide {
-  constructor(readonly rideDAO: RideDAO){}
+  constructor(readonly rideRepository: RideRepository){}
 
   async execute(rideId: string) {
-    const ride = await this.rideDAO.getById(rideId)
+    const ride = await this.rideRepository.getById(rideId)
     if (ride.getStatus() != RideStatus.InProgress) throw new Error("Only rides with 'in_progress' status is accepted");
-    const inputPosition = await this.rideDAO.getPositionByRideId(rideId)
+    const inputPosition = await this.rideRepository.getPositionByRideId(rideId)
     ride.calculateDistance(inputPosition)
     ride.calculatePrice()
     ride.finish()
-    await this.rideDAO.finishRide(ride)
+    await this.rideRepository.finishRide(ride)
   }
 }

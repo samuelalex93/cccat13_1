@@ -11,13 +11,13 @@ import StartRide from "../src/application/usecase/StartRide";
 import UpdatePosition from "../src/application/usecase/UpdatePosition";
 import Connection from "../src/infra/database/Connection";
 import PgPromiseAdapter from "../src/infra/database/PgPromiseAdapter";
-import AccountDAODatabase from "../src/infra/repository/AccountDAODatabase";
-import RideDAODatabase from "../src/infra/repository/RideDAODatabase";
+import AccountRepositoryDatabase from "../src/infra/repository/AccountRepositoryDatabase";
+import RideRepositoryDatabase from "../src/infra/repository/RideRepositoryDatabase";
 
 let signup: Signup;
 let connection: Connection;
-let accountDAO: AccountDAODatabase;
-let rideDAO: RideDAODatabase;
+let accountRepository: AccountRepositoryDatabase;
+let rideRepository: RideRepositoryDatabase;
 let requestRide: RequestRide;
 let getRide: GetRide;
 let acceptRide: AcceptRide;
@@ -32,16 +32,16 @@ describe("RideSerive", () => {
 
   beforeAll(async () => {
     connection = new PgPromiseAdapter();
-    accountDAO = new AccountDAODatabase(connection);
-    rideDAO = new RideDAODatabase(connection);
-    signup = new Signup(accountDAO);
-    requestRide = new RequestRide(rideDAO, accountDAO);
-    getRide = new GetRide(rideDAO, accountDAO);
-    acceptRide = new AcceptRide(rideDAO, accountDAO);
-    cancelRide = new CancelRide(rideDAO);
-    startRide = new StartRide(rideDAO);
-    finishRide = new FinishRide(rideDAO);
-    updatePosition = new UpdatePosition(rideDAO);
+    accountRepository = new AccountRepositoryDatabase(connection);
+    rideRepository = new RideRepositoryDatabase(connection);
+    signup = new Signup(accountRepository);
+    requestRide = new RequestRide(rideRepository, accountRepository);
+    getRide = new GetRide(rideRepository, accountRepository);
+    acceptRide = new AcceptRide(rideRepository, accountRepository);
+    cancelRide = new CancelRide(rideRepository);
+    startRide = new StartRide(rideRepository);
+    finishRide = new FinishRide(rideRepository);
+    updatePosition = new UpdatePosition(rideRepository);
     //getAccount = new GetAccount(accountDAO);
 
     const { accountId: passengerId } = await createAccount({

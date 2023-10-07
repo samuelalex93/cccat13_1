@@ -1,17 +1,16 @@
 import Account from "../../domain/Account";
-import AccountDAO from "../repository/AccountDAO";
-import CpfValidator from "../../domain/Cpf";
+import AccountRepository from "../repository/AccountRepository";
 import MailerGateway from "../../infra/gateway/MailerGateway";
 
 export default class Signup {
   mailerGateway: MailerGateway
 
-  constructor(readonly accountDAO: AccountDAO){
+  constructor(readonly accountRepository: AccountRepository){
     this.mailerGateway = new MailerGateway()
   }
 
   async execute(input: Input){
-    const existingAccount = await this.accountDAO.getByEmail(input.email);
+    const existingAccount = await this.accountRepository.getByEmail(input.email);
     if (existingAccount) throw new Error("Account already exists");
     const password = Account.encryptPassword(input.password)
     const account = Account.create(
@@ -23,7 +22,7 @@ export default class Signup {
       input.carPlate,
       password
     )
-    await this.accountDAO.save(account);
+    await this.accountRepository.save(account);
     await this.mailerGateway.send(
       input.email,
       "Verification",

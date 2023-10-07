@@ -1,14 +1,14 @@
 import crypto from 'crypto';
 import { RideStatus } from "../../@types/RideStatus";
-import RideDAO from "../repository/RideDAO";
+import RideRepository from "../repository/RideRepository";
 
 export default class UpdatePosition {
-  constructor(readonly rideDAO: RideDAO){
+  constructor(readonly rideRepository: RideRepository){
   }
 
   async execute(input: Input) {
     const {rideId, lat, long} = input
-    const ride = await this.rideDAO.getById(rideId)
+    const ride = await this.rideRepository.getById(rideId)
     if(ride.getStatus() != RideStatus.InProgress) throw new Error("Only rides with 'in_progress' status is accepted")
     const positionId = crypto.randomUUID();
     const position = {
@@ -18,7 +18,7 @@ export default class UpdatePosition {
       long,
       date: new Date()
     }
-    await this.rideDAO.savePosition(position)
+    await this.rideRepository.savePosition(position)
     return { positionId }
   }
 }
