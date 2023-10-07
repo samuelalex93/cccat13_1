@@ -13,132 +13,153 @@ let connection: Connection;
 let accountDAO: AccountDAO;
 
 beforeEach(function () {
-	connection = new PgPromiseAdapter();
-	accountDAO = new AccountDAODatabase(connection);
-	signup = new Signup(accountDAO);
-	signin = new Signin(accountDAO);
-	getAccount = new GetAccount(accountDAO);
+  connection = new PgPromiseAdapter();
+  accountDAO = new AccountDAODatabase(connection);
+  signup = new Signup(accountDAO);
+  signin = new Signin(accountDAO);
+  getAccount = new GetAccount(accountDAO);
+});
+
+afterEach(async () => {
+  await connection.close();
 });
 
 test("Deve criar um passageiro", async function () {
-	const input: any = {
-		name: "John Doe",
-		email: `john.doe${Math.random()}@gmail.com`,
-		cpf: "95818705552",
-		isPassenger: true,
-		password: "senha123"
-	}
-	const output = await signup.execute(input);
-	const account = await getAccount.execute(output.accountId);
-	expect(account?.password).toBeDefined();
-	expect(account?.accountId).toBeDefined();
-	expect(account?.name).toBe(input.name);
-	expect(account?.email).toBe(input.email);
-	expect(account?.cpf).toBe(input.cpf);
+  const input: any = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "95818705552",
+    isPassenger: true,
+    password: "senha123",
+  };
+  const output = await signup.execute(input);
+  const account = await getAccount.execute(output.accountId);
+  expect(account?.password).toBeDefined();
+  expect(account?.accountId).toBeDefined();
+  expect(account?.name).toBe(input.name);
+  expect(account?.email).toBe(input.email);
+  expect(account?.cpf).toBe(input.cpf);
 });
 
 test("Não deve criar um passageiro com cpf inválido", async function () {
-	const input: any = {
-		name: "John Doe",
-		email: `john.doe${Math.random()}@gmail.com`,
-		cpf: "95818705500",
-		isPassenger: true
-	}
-	await expect(() => signup.execute(input)).rejects.toThrow(new Error("Invalid cpf"));
+  const input: any = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "95818705500",
+    isPassenger: true,
+  };
+  await expect(() => signup.execute(input)).rejects.toThrow(
+    new Error("Invalid cpf")
+  );
 });
 
 test("Não deve criar um passageiro com nome inválido", async function () {
-	const input: any = {
-		name: "John",
-		email: `john.doe${Math.random()}@gmail.com`,
-		cpf: "95818705552",
-		isPassenger: true
-	}
-	await expect(() => signup.execute(input)).rejects.toThrow(new Error("Invalid name"));
+  const input: any = {
+    name: "John",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "95818705552",
+    isPassenger: true,
+  };
+  await expect(() => signup.execute(input)).rejects.toThrow(
+    new Error("Invalid name")
+  );
 });
 
 test("Não deve criar um passageiro com email inválido", async function () {
-	const input:any = {
-		name: "John Doe",
-		email: `john.doe${Math.random()}@`,
-		cpf: "95818705552",
-		isPassenger: true
-	}
-	await expect(() => signup.execute(input)).rejects.toThrow(new Error("Invalid email"));
+  const input: any = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@`,
+    cpf: "95818705552",
+    isPassenger: true,
+  };
+  await expect(() => signup.execute(input)).rejects.toThrow(
+    new Error("Invalid email")
+  );
 });
 
 test("Não deve criar um passageiro com conta existente", async function () {
-	const input:any = {
-		name: "John Doe",
-		email: `john.doe${Math.random()}@gmail.com`,
-		cpf: "95818705552",
-		isPassenger: true
-	}
-	await signup.execute(input)
-	await expect(() => signup.execute(input)).rejects.toThrow(new Error("Account already exists"));
+  const input: any = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "95818705552",
+    isPassenger: true,
+  };
+  await signup.execute(input);
+  await expect(() => signup.execute(input)).rejects.toThrow(
+    new Error("Account already exists")
+  );
 });
 
 test("Deve criar um motorista", async function () {
-	const input:any = {
-		name: "John Doe",
-		email: `john.doe${Math.random()}@gmail.com`,
-		cpf: "95818705552",
-		carPlate: "AAA9999",
-		isDriver: true,
-		password: "senha123"
-	}
-	const output = await signup.execute(input);
-	expect(output.accountId).toBeDefined();
+  const input: any = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "95818705552",
+    carPlate: "AAA9999",
+    isDriver: true,
+    password: "senha123",
+  };
+  const output = await signup.execute(input);
+  expect(output.accountId).toBeDefined();
 });
 
 test("Não deve criar um motorista com place do carro inválida", async function () {
-	const input:any = {
-		name: "John Doe",
-		email: `john.doe${Math.random()}@gmail.com`,
-		cpf: "95818705552",
-		carPlate: "AAA999",
-		isDriver: true
-	}
-	await expect(() => signup.execute(input)).rejects.toThrow(new Error("Invalid plate"));
+  const input: any = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "95818705552",
+    carPlate: "AAA999",
+    isDriver: true,
+  };
+  await expect(() => signup.execute(input)).rejects.toThrow(
+    new Error("Invalid plate")
+  );
 });
 
 test("Não deve fazer login com cpf inexistente", async function () {
-	const input:any = {
-		name: "John Doe",
-		email: `john.doe${Math.random()}@gmail.com`,
-		cpf: "95818705552",
-		carPlate: "AAA9999",
-		isDriver: true,
-		password: "senha123"
-	}
+  const input: any = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "95818705552",
+    carPlate: "AAA9999",
+    isDriver: true,
+    password: "senha123",
+  };
 
-	await signup.execute(input);
-	await expect(() => signin.execute({cpf: "95818705553", password: input.password})).rejects.toThrow(new Error("There no any account with this CPF"));
+  await signup.execute(input);
+  await expect(() =>
+    signin.execute({ cpf: "95818705553", password: input.password })
+  ).rejects.toThrow(new Error("There no any account with this CPF"));
 });
 
 test("Não deve fazer login com senha incorreta", async function () {
-	const input:any = {
-		name: "John Doe",
-		email: `john.doe${Math.random()}@gmail.com`,
-		cpf: "95818705552",
-		carPlate: "AAA9999",
-		isDriver: true,
-		password: "senha123"
-	}
-	await signup.execute(input);
-	await expect(() => signin.execute({cpf: input.cpf, password: "senha12"})).rejects.toThrow(new Error("Invalid password"));
+  const input: any = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "95818705552",
+    carPlate: "AAA9999",
+    isDriver: true,
+    password: "senha123",
+  };
+  await signup.execute(input);
+  await expect(() =>
+    signin.execute({ cpf: input.cpf, password: "senha12" })
+  ).rejects.toThrow(new Error("Invalid password"));
 });
 
 test("Deve fazer login", async function () {
-	const input:any = {
-		name: "John Doe",
-		email: `john.doe${Math.random()}@gmail.com`,
-		cpf: "95818705552",
-		carPlate: "AAA9999",
-		isDriver: true,
-		password: "senha123"
-	}
-	await signup.execute(input);
-	const outputSignin = await signin.execute({cpf: input.cpf, password: input.password});
-	expect(outputSignin.accountId).toBeDefined();
+  const input: any = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "95818705552",
+    carPlate: "AAA9999",
+    isDriver: true,
+    password: "senha123",
+  };
+  await signup.execute(input);
+  const outputSignin = await signin.execute({
+    cpf: input.cpf,
+    password: input.password,
+  });
+  expect(outputSignin.token).toBeDefined();
 });
