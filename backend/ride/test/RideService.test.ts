@@ -114,7 +114,7 @@ describe("RideSerive", () => {
 
       const output = await requestRide.execute(input);
       const ride = await getRide.execute(output.rideId);
-      expect(ride.getStatus()).toBe(RideStatus.Requested);
+      expect(ride.status).toBe(RideStatus.Requested);
     });
   });
   describe("acceptRide", () => {
@@ -190,7 +190,7 @@ describe("RideSerive", () => {
         const { rideId } = await requestRide.execute(input)
         await acceptRide.execute({ accountId: driverAccountId, rideId })
         const ride = await getRide.execute(rideId)
-        expect(ride?.getStatus()).toBe(RideStatus.Accepted)
+        expect(ride?.status).toBe(RideStatus.Accepted)
         expect(ride?.driverId).toBe(driverAccountId)
       })
   });
@@ -215,7 +215,7 @@ describe("RideSerive", () => {
       await acceptRide.execute({accountId: driverAccountId, rideId})
       await startRide.execute(rideId)
       const ride = await getRide.execute(rideId)
-      expect(ride?.getStatus()).toBe(RideStatus.InProgress)
+      expect(ride?.status).toBe(RideStatus.InProgress)
     })
   })
 
@@ -291,7 +291,7 @@ describe("RideSerive", () => {
       await finishRide.execute(rideId)
       
       const ride = await getRide.execute(rideId)
-      expect(ride.getStatus()).toEqual(RideStatus.Completed)
+      expect(ride.status).toEqual(RideStatus.Completed)
       expect(ride.distance).toBeDefined()
       expect(ride.fare).toBeDefined()
     })

@@ -1,14 +1,12 @@
 import Account from "../../domain/Account";
 import AccountDAO from "../repository/AccountDAO";
-import CpfValidator from "../../domain/CpfValidator";
+import CpfValidator from "../../domain/Cpf";
 import MailerGateway from "../../infra/gateway/MailerGateway";
 
 export default class Signup {
-  cpfValidator: CpfValidator
   mailerGateway: MailerGateway
 
   constructor(readonly accountDAO: AccountDAO){
-    this.cpfValidator = new CpfValidator()
     this.mailerGateway = new MailerGateway()
   }
 

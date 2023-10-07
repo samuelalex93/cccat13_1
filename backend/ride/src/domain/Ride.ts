@@ -1,23 +1,23 @@
+import { coords } from './../../test/mockCoords';
 import crypto from "crypto";
 import { RideStatus } from "../@types/RideStatus";
 import DistanceCalculator from "./DistanceCalculator";
 import Position from "./Position";
+import Coord from "./Coord";
+import { FareCalculatorFactory } from "./FareCalculate";
 
 export default class Ride {
   driverId?: string;
-	fare: number = 0;
-	distance: number = 0;
-
 
   private constructor(
     readonly rideId: string,
     readonly passengerId: string,
     private status: string,
-    readonly fromLat: number,
-    readonly fromLong: number,
-    readonly toLat: number,
-    readonly toLong: number,
+    readonly from: Coord,
+    readonly to: Coord,
     readonly date: Date,
+    private distance: number,
+    private fare: number
   ) {}
 
   static create(
@@ -25,7 +25,7 @@ export default class Ride {
     fromLat: number,
     fromLong: number,
     toLat: number,
-    toLong: number,
+    toLong: number
   ) {
     const rideId = crypto.randomUUID();
     const status = RideStatus.Requested;
@@ -34,11 +34,11 @@ export default class Ride {
       rideId,
       passengerId,
       status,
-      fromLat,
-      fromLong,
-      toLat,
-      toLong,
+      new Coord(fromLat, fromLong),
+      new Coord(toLat, toLong),
       date,
+      0,
+      0
     );
   }
 
@@ -52,22 +52,20 @@ export default class Ride {
     toLat: number,
     toLong: number,
     date: Date,
-		fare?: number,
-		distance?: number
+    fare: number,
+    distance: number
   ) {
     const ride = new Ride(
       rideId,
       passengerId,
       status,
-      fromLat,
-      fromLong,
-      toLat,
-      toLong,
+      new Coord(fromLat, fromLong),
+      new Coord(toLat, toLong),
       date,
+      distance,
+      fare
     );
     ride.driverId = driverId;
-    ride.fare = fare || 0;
-    ride.distance = distance || 0;
     return ride;
   }
 
@@ -99,16 +97,25 @@ export default class Ride {
   }
 
   calculateDistance(positions: Position[]) {
-    let distance = 0
-    for(let i = 1; i < positions.length; i++) {
-      const from = {lat: positions[i-1].lat, long: positions[i-1].long}
-      const to = {lat: positions[i].lat, long: positions[i].long}
-      distance += DistanceCalculator.calculate(from, to) 
+    let distance = 0;
+    for (let i = 1; i < positions.length; i++) {
+      const from = { lat: positions[i - 1].coord.getLat(), long: positions[i - 1].coord.getLong() };
+      const to = { lat: positions[i].coord.getLat(), long: positions[i].coord.getLong() };
+      distance += DistanceCalculator.calculate(new Coord(from.lat, from.long), new Coord(to.lat, to.long));
     }
-    this.distance = distance
+    this.distance = distance;
   }
 
-  calculatePrice(){
-    this.fare = 2.1 * this.distance
+  calculatePrice() {
+    const fareCalculator = FareCalculatorFactory.create(this.date)
+    this.fare = fareCalculator.calculate(this.distance)
+  }
+
+  getDistance(){
+    return this.distance
+  }
+
+  getFare(){
+    return this.fare
   }
 }
