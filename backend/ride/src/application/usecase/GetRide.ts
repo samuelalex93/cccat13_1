@@ -1,12 +1,12 @@
-import AccountRepository from "../repository/AccountRepository";
+import AccountGateway from "../gateway/AccountGateway";
 import RideRepository from "../repository/RideRepository";
 
 export default class GetRide {
-  constructor(readonly rideRepository: RideRepository, readonly accountRepository: AccountRepository) {}
+  constructor(readonly rideRepository: RideRepository, readonly accountGateway: AccountGateway) {}
 
   async execute(rideId: string) {
     const ride = await this.rideRepository.getById(rideId);
-    const account = await this.accountRepository.getById(ride.passengerId);
+    const account = await this.accountGateway.getById(ride.passengerId);
     if (!ride || !account) throw new Error();
     return {
       rideId: ride.rideId,
@@ -22,10 +22,10 @@ export default class GetRide {
       fare: ride.getFare(),
       passenger: {
         accountId: account.accountId,
-        name: account.name.getValue(),
-        email: account.email.getValue(),
-        cpf: account.cpf.getValue(),
-        carPlate: account.carPlate.getValue(),
+        name: account.name,
+        email: account.email,
+        cpf: account.cpf,
+        carPlate: account.carPlate,
         isPassenger: account.isPassenger,
         isDriver: account.isDriver,
       },

@@ -1,13 +1,17 @@
-import AccountRepository from "../repository/AccountRepository";
 import Ride from "../../domain/Ride";
 import RideRepository from "../repository/RideRepository";
+import AccountGateway from "../gateway/AccountGateway";
+import RepositoryFactory from "../factory/RepositoryFactory";
 
 export default class RequestRide {
-  constructor(readonly rideRepository: RideRepository, readonly accountRepostory: AccountRepository) {}
+  rideRepository: RideRepository
+  constructor(readonly repositoryFactory: RepositoryFactory, readonly accountGateway: AccountGateway) {
+    this.rideRepository = repositoryFactory.createRideRepository()
+  }
 
   async execute(input:Input) {
     const { accountId, from, to } = input;
-    const account = await this.accountRepostory.getById(accountId);
+    const account = await this.accountGateway.getById(accountId);
     if (!account?.isPassenger)
       throw new Error("Isn't passenger's account");
     const activeRides = await this.rideRepository.getActiveRidesByPassengerId(accountId);

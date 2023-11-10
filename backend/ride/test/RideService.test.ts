@@ -6,18 +6,24 @@ import CancelRide from "../src/application/usecase/CancelRide";
 import FinishRide from "../src/application/usecase/FinishRide";
 import GetRide from "../src/application/usecase/GetRide";
 import RequestRide from "../src/application/usecase/RequestRide";
-import Signup from "../src/application/usecase/Signup";
 import StartRide from "../src/application/usecase/StartRide";
 import UpdatePosition from "../src/application/usecase/UpdatePosition";
 import Connection from "../src/infra/database/Connection";
 import PgPromiseAdapter from "../src/infra/database/PgPromiseAdapter";
-import AccountRepositoryDatabase from "../src/infra/repository/AccountRepositoryDatabase";
+import AccountRepositoryDatabase from "../src/infra/repository/PositionRepositoryDatabase";
 import RideRepositoryDatabase from "../src/infra/repository/RideRepositoryDatabase";
+import AccountGateway from '../src/application/gateway/AccountGateway';
+import AxiosAdapter from '../src/infra/http/AxiosAdapter';
+import AccountGatewayHttp from '../src/infra/gateway/AccountGatewayHttp';
+import PositionRepositoryDatabase from '../src/infra/repository/PositionRepositoryDatabase';
+import PositionRepository from '../src/application/repository/PositionRepository';
+import RepositoryDatabaseFactory from '../src/infra/factory/RepositoryDatabaseFactory';
 
-let signup: Signup;
+let accountGateway: AccountGateway;
 let connection: Connection;
 let accountRepository: AccountRepositoryDatabase;
 let rideRepository: RideRepositoryDatabase;
+let positionRepository: PositionRepository;
 let requestRide: RequestRide;
 let getRide: GetRide;
 let acceptRide: AcceptRide;
@@ -34,15 +40,16 @@ describe("RideSerive", () => {
     connection = new PgPromiseAdapter();
     accountRepository = new AccountRepositoryDatabase(connection);
     rideRepository = new RideRepositoryDatabase(connection);
-    signup = new Signup(accountRepository);
-    requestRide = new RequestRide(rideRepository, accountRepository);
-    getRide = new GetRide(rideRepository, accountRepository);
-    acceptRide = new AcceptRide(rideRepository, accountRepository);
+    const repositoryFactory = new RepositoryDatabaseFactory(connection);
+    positionRepository = new PositionRepositoryDatabase(connection);
+    accountGateway = new AccountGatewayHttp(new AxiosAdapter());
+    requestRide = new RequestRide(repositoryFactory, accountGateway);
+    getRide = new GetRide(rideRepository, accountGateway);
+    acceptRide = new AcceptRide(rideRepository, accountGateway);
     cancelRide = new CancelRide(rideRepository);
     startRide = new StartRide(rideRepository);
-    finishRide = new FinishRide(rideRepository);
-    updatePosition = new UpdatePosition(rideRepository);
-    //getAccount = new GetAccount(accountDAO);
+    finishRide = new FinishRide(rideRepository, positionRepository);
+    updatePosition = new UpdatePosition(rideRepository, positionRepository);
 
     const { accountId: passengerId } = await createAccount({
       name: "John Doe",
@@ -64,7 +71,7 @@ describe("RideSerive", () => {
   });
 
   const createAccount = async (input: any) => {
-    return signup.execute(input);
+    return accountGateway.signup(input);
   };
 
   beforeEach(async () => {

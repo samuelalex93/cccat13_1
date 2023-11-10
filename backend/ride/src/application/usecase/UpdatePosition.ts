@@ -1,9 +1,10 @@
 import crypto from 'crypto';
 import { RideStatus } from "../../@types/RideStatus";
 import RideRepository from "../repository/RideRepository";
+import PositionRepository from '../repository/PositionRepository';
 
 export default class UpdatePosition {
-  constructor(readonly rideRepository: RideRepository){
+  constructor(readonly rideRepository: RideRepository, readonly positionRepository: PositionRepository){
   }
 
   async execute(input: Input) {
@@ -18,7 +19,7 @@ export default class UpdatePosition {
       long,
       date: new Date()
     }
-    await this.rideRepository.savePosition(position)
+    await this.positionRepository.savePosition(position)
     return { positionId }
   }
 }

@@ -1,32 +1,31 @@
-import GetAccount from "../../application/usecase/GetAccount";
 import GetRide from "../../application/usecase/GetRide";
 import RequestRide from "../../application/usecase/RequestRide";
-import Signin from "../../application/usecase/Signin";
-import Signup from "../../application/usecase/Signup";
+import inject from "../di/Inject";
+import Registry from "../di/Registry";
 import HttpServer from "../http/HttpServer";
+import Queue from "../queue/Queue";
 
 export default class MainController {
-  constructor(readonly httpServer: HttpServer, signup: Signup, signin: Signin, getAccount: GetAccount,  requestRide: RequestRide, getRide:GetRide){
-    httpServer.on("post", "/signup",async (params:any, body:any) => {
-      const output = await signup.execute(body)
-      return output
-    })
-    httpServer.on("post", "/signin",async (params:any, body:any) => {
-      const output = await signin.execute(body)
-      return output
-    })
-    httpServer.on("get", "/accounts/:accountId",async (params:any, body:any) => {
-      const output = await getAccount.execute(params.accountId)
-      return output
-    })
-    httpServer.on("post", "/request_ride", async function (params: any, body: any) {
+  @inject("requestRide")
+	requestRide?: RequestRide;
+	@inject("getRide")
+	getRide?: GetRide;
+	@inject("httpServer")
+	httpServer?: HttpServer;
+	@inject("queue")
+	queue?: Queue
+  constructor(){
+    this.httpServer?.on("post", "/request_ride", async function (params: any, body: any) {
 			console.log(body);
-			const output = await requestRide.execute(body);
+			const output = await Registry.getInstance().inject("requestRide").execute(body);
 			return output;
 		});
-		httpServer.on("get", "/rides/:rideId", async function (params: any, body: any) {
+    this.httpServer?.on("post", "/request_ride_async", async (params: any, body: any) => {
+			await this.queue?.publish("requestRide", body);
+		});
+		this.httpServer?.on("get", "/rides/:rideId", async function (params: any, body: any) {
 			console.log(params.rideId);
-			const output = await getRide.execute(params.rideId);
+			const output = await Registry.getInstance().inject("getRide").execute(params.rideId);
 			return output;
 		});
   }
