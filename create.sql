@@ -9,6 +9,8 @@ create table cccat13.account (
 	cpf text,
 	car_plate text,
 	password text,
+	password_algorithm text,
+	salt text,
 	is_passenger boolean,
 	is_driver boolean,
 	date timestamp,
