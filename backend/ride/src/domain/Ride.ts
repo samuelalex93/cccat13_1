@@ -1,4 +1,3 @@
-import { coords } from './../../test/mockCoords';
 import crypto from "crypto";
 import { RideStatus } from "../@types/RideStatus";
 import DistanceCalculator from "./DistanceCalculator";

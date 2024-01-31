@@ -4,7 +4,6 @@ import RequestRideView from "../../src/view/RequestRideView.vue";
 import GetRideView from "../../src/view/GetRideView.vue";
 import AxiosAdapter from "../../src/infra/http/AxiosAdapter";
 import RideGatewayHttp from "../../src/infra/gateway/RideGatewayHttp";
-import GeolocationGatewayBrowser from "../../src/infra/gateway/GeolocationGatewayBrowser";
 import GeolocationGateway from "../../src/infra/gateway/GeolocationGateway";
 
 function sleep (time: number) {

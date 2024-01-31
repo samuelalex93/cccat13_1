@@ -5,7 +5,9 @@
   "license": "MIT",
   "scripts": {
     "test": "jest",
-    "dev": "nodemon src/main.ts"
+    "dev": "nodemon src/main.ts",
+    "build": "tsc --build",
+    "start": "node dist/main.js"
   },
   "dependencies": {
     "@types/jest": "^29.5.4",

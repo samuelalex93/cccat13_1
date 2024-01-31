@@ -1,0 +1,99 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - ./create.sql:/docker-entrypoint-initdb.d/create.sql
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_PASS: pass
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_VHOST: '/'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - app_network
+
+  backend_account:
+    build:
+      context: ./backend/account
+      dockerfile: Dockerfile
+    container_name: backend_account
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - ./app/account:/app
+    ports:
+      - 3000:3000
+    networks:
+      - app_network
+
+  backend_payment:
+    build:
+      context: ./backend/payment
+      dockerfile: Dockerfile
+    container_name: backend_payment
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - ./app/payment:/app
+    ports:
+      - 3002:3002
+    networks:
+      - app_network
+
+  frontend_ride:
+    build:
+      context: ./frontend/ride
+      dockerfile: Dockerfile
+    container_name: frontend_ride
+    depends_on:
+      - backend_account
+    volumes:
+      - ./app/frontend_ride:/app
+    ports:
+      - 80:80
+    networks:
+      - app_network
+      
+  backend_ride:
+    build:
+      context: ./backend/ride
+      dockerfile: Dockerfile
+    container_name: backend_ride
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - ./app/ride:/app
+    ports:
+      - 3001:3001
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge

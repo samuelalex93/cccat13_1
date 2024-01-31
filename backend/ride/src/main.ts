@@ -29,4 +29,4 @@ Registry.getInstance().provide("updateRideProjection", updateRideProjection);
 Registry.getInstance().provide("queue", queue);
 new MainController()
 new QueueController();
-httpServer.listen(3000)
+httpServer.listen(3001)

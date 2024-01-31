@@ -1,5 +1,4 @@
 import Cpf from "./CpfValidator";
-import CpfValidator from "./CpfValidator";
 
 export default class Account {
 	

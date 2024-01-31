@@ -4,14 +4,14 @@ import amqp from "amqplib";
 export default class RabbitMQAdapter implements Queue {
 	
 	async publish(exchange: string, input: any): Promise<void> {
-		const connection = await amqp.connect("amqp://localhost");
+		const connection = await amqp.connect("amqp://user:pass@127.0.0.1");
 		const channel = await connection.createChannel();
 		channel.assertExchange(exchange, "direct", { durable: true });
 		channel.publish(exchange, "", Buffer.from(JSON.stringify(input)));
 	}
 
 	async consume(exchange: string, queue: string, callback: Function): Promise<void> {
-		const connection = await amqp.connect("amqp://localhost");
+		const connection = await amqp.connect("amqp://user:pass@127.0.0.1");
 		const channel = await connection.createChannel();
 		channel.assertExchange(exchange, "direct", { durable: true });
 		channel.assertQueue(queue, { durable: true });
